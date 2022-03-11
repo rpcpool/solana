@@ -139,6 +139,7 @@ pub struct JsonRpcConfig {
     pub health_check_slot_distance: u64,
     pub enable_bigtable_ledger_storage: bool,
     pub enable_bigtable_ledger_upload: bool,
+    pub disable_rpc_bigtable_ledger_blocks: bool,
     pub max_multiple_accounts: Option<usize>,
     pub account_indexes: AccountSecondaryIndexes,
     pub rpc_threads: usize,
@@ -991,11 +992,13 @@ impl JsonRpcRequestProcessor {
                     confirmed_block
                 };
                 if result.is_err() {
-                    if let Some(bigtable_ledger_storage) = &self.bigtable_ledger_storage {
-                        let bigtable_result =
-                            bigtable_ledger_storage.get_confirmed_block(slot).await;
-                        self.check_bigtable_result(&bigtable_result)?;
-                        return Ok(bigtable_result.ok().map(configure_block));
+                    if !self.config.disable_rpc_bigtable_ledger_blocks {
+                      if let Some(bigtable_ledger_storage) = &self.bigtable_ledger_storage {
+                          let bigtable_result =
+                              bigtable_ledger_storage.get_confirmed_block(slot).await;
+                          self.check_bigtable_result(&bigtable_result)?;
+                          return Ok(bigtable_result.ok().map(configure_block));
+                      }
                     }
                 }
                 self.check_slot_cleaned_up(&result, slot)?;
@@ -1381,11 +1384,13 @@ impl JsonRpcRequestProcessor {
                 }
                 None => {
                     if let Some(bigtable_ledger_storage) = &self.bigtable_ledger_storage {
-                        return Ok(bigtable_ledger_storage
-                            .get_confirmed_transaction(&signature)
-                            .await
-                            .unwrap_or(None)
-                            .map(|confirmed| confirmed.encode(encoding)));
+                        if !self.config.disable_rpc_bigtable_ledger_blocks {
+                          return Ok(bigtable_ledger_storage
+                              .get_confirmed_transaction(&signature)
+                              .await
+                              .unwrap_or(None)
+                              .map(|confirmed| confirmed.encode(encoding)));
+                        }
                     }
                 }
             }

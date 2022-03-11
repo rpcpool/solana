@@ -1249,6 +1249,13 @@ pub fn main() {
                 .help("Upload new confirmed blocks into a BigTable instance"),
         )
         .arg(
+            Arg::with_name("disable_rpc_bigtable_ledger_blocks")
+                .long("disable-rpc-bigtable-ledger-blocks")
+                .requires("enable-rpc-bigtable-ledger-storage")
+                .takes_value(false)
+                .help("Do not fetch block data from bigtable"),
+        )
+        .arg(
             Arg::with_name("enable_cpi_and_log_storage")
                 .long("enable-cpi-and-log-storage")
                 .requires("enable_rpc_transaction_history")
@@ -2442,6 +2449,8 @@ pub fn main() {
             enable_cpi_and_log_storage: matches.is_present("enable_cpi_and_log_storage"),
             enable_bigtable_ledger_storage: matches
                 .is_present("enable_rpc_bigtable_ledger_storage"),
+            disable_rpc_bigtable_ledger_blocks: matches
+                .is_present("disable_rpc_bigtable_ledger_blocks"),
             enable_bigtable_ledger_upload: matches.is_present("enable_bigtable_ledger_upload"),
             identity_pubkey: identity_keypair.pubkey(),
             faucet_addr: matches.value_of("rpc_faucet_addr").map(|address| {
